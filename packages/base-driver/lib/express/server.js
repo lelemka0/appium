@@ -113,6 +113,7 @@ async function server(opts) {
         extraMethodMap,
         webSocketsMapping: appiumServer.webSocketsMapping,
       });
+      httpServer.on('upgrade', handleUpgrade(appiumServer.webSocketsMapping));
       // allow extensions to update the app and http server objects
       for (const updater of serverUpdaters) {
         await updater(app, appiumServer, cliArgs);
@@ -157,7 +158,7 @@ function configureServer({
   app.use(`${basePath}/produce_error`, produceError);
   app.use(`${basePath}/crash`, produceCrash);
 
-  app.use(handleUpgrade(webSocketsMapping));
+  //app.use(handleUpgrade(webSocketsMapping));
   if (allowCors) {
     app.use(allowCrossDomain);
   } else {

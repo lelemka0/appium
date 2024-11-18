@@ -105,13 +105,10 @@ export function defaultToJSONContentType(req, res, next) {
 /**
  *
  * @param {import('@appium/types').StringRecord<import('@appium/types').WSServer>} webSocketsMapping
- * @returns {import('express').RequestHandler}
+ * @returns {(req: import('http').IncomingMessage, socket: import('net').Socket, head: Buffer) => void}
  */
 export function handleUpgrade(webSocketsMapping) {
-  return (req, res, next) => {
-    if (!req.headers?.upgrade || _.toLower(req.headers.upgrade) !== 'websocket') {
-      return next();
-    }
+  return (req, socket, head) => {
     let currentPathname;
     try {
       currentPathname = new URL(req.url ?? '').pathname;
@@ -120,13 +117,12 @@ export function handleUpgrade(webSocketsMapping) {
     }
     for (const [pathname, wsServer] of _.toPairs(webSocketsMapping)) {
       if (match(pathname)(currentPathname)) {
-        return wsServer.handleUpgrade(req, req.socket, Buffer.from(''), (ws) => {
+        return wsServer.handleUpgrade(req, socket, head, (ws) => {
           wsServer.emit('connection', ws, req);
         });
       }
     }
     log.info(`Did not match the websocket upgrade request at ${currentPathname} to any known route`);
-    next();
   };
 }
 
